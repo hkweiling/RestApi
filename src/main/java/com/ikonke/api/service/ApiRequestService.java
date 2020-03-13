@@ -37,6 +37,10 @@ public class ApiRequestService {
     private String apiOpt;
     @Value("${api.ccuinfo}")
     private String apiCcuInfo;
+    @Value("${api.scenes}")
+    private String apiScenes;
+    @Value("${api.groups}")
+    private String apiGroups;
 
     private Map<String, String> header(App app) {
         Map<String, String> header = new HashMap<>();
@@ -45,41 +49,42 @@ public class ApiRequestService {
         return header;
     }
 
-    public List<CcuItem> getCcuList(App app, int size) {
+    public List<CcuItem> getCcuList(App app, int size,String baseurl) {
+        String url=apiCcuList.replace("baseurl",baseurl);
         PageReq req = new PageReq(0, size);
         Map<String, String> header = header(app);
-        Map<Integer,String> response = HttpUtil.post(HttpUtil.getUnsafeOkHttpClient(), apiCcuList, req, header);
+        Map<Integer,String> response = HttpUtil.post(HttpUtil.getUnsafeOkHttpClient(), url, req, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
             statusCode=code;
         }
         if (statusCode!=200){
-            log.error("call {} with header {} error, code={}, resp={}", apiCcuList,header, statusCode,response.get(statusCode));
+            log.error("call {} with header {} error, code={}, resp={}", url,header, statusCode,response.get(statusCode));
         }else{
             String resp=response.get(statusCode);
             try {
                 PageResp<CcuItem> ccuListResp = JsonUtil.fromJson(resp, new TypeToken<PageResp<CcuItem>>() {
                 }.getType());
                 if (ccuListResp == null) {
-                    log.error("call {} with header {} error, resp={}", apiCcuList, header, resp);
+                    log.error("call {} with header {} error, resp={}", url, header, resp);
                 } else {
-                    log.info("call {} with header {} success, total {} ccu", apiCcuList, header, ccuListResp.getTotal());
+                    log.info("call {} with header {} success, total {} ccu", url, header, ccuListResp.getTotal());
                     return ccuListResp.getData();
                 }
             } catch (Exception e) {
-                log.error("call {} with header {} error, resp={}, e=", apiCcuList, header, resp, e);
+                log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
             }
         }
         return null;
     }
 
-    public List<CcuItem> getCcuList(App app) {
-        return getCcuList(app, 10);
+    public List<CcuItem> getCcuList(App app,String baseurl) {
+        return getCcuList(app, 10,baseurl);
     }
 
-    public NodeListResp getNodeList(App app, CcuItem ccu) {
+    public NodeListResp getNodeList(App app, CcuItem ccu,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiNodeList.replace("CCU_ID", ccu.getId());
+        String url = apiNodeList.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -105,9 +110,9 @@ public class ApiRequestService {
 
     }
 
-    public List<Device> getDevList(App app, CcuItem ccu) {
+    public List<Device> getDevList(App app, CcuItem ccu,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiDeviceList.replace("CCU_ID", ccu.getId());
+        String url = apiDeviceList.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -133,9 +138,9 @@ public class ApiRequestService {
         return null;
     }
 
-    public DeviceStatus getDevStatus(App app, CcuItem ccu, Device dev) {
+    public DeviceStatus getDevStatus(App app, CcuItem ccu, Device dev,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiDeviceStatus.replace("CCU_ID", ccu.getId());
+        String url = apiDeviceStatus.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Device req = new Device(dev.getId(), dev.getType());
         Map<Integer,String> response = HttpUtil.post(HttpUtil.getUnsafeOkHttpClient(), url, req, header);
         int statusCode=0;
@@ -161,9 +166,9 @@ public class ApiRequestService {
         return null;
     }
 
-    public CcuState getCcuState(App app, CcuItem ccu) {
+    public CcuState getCcuState(App app, CcuItem ccu,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiState.replace("CCU_ID", ccu.getId());
+        String url = apiState.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -188,9 +193,9 @@ public class ApiRequestService {
         return null;
     }
 
-    public CcuState getArmingState(App app, CcuItem ccu) {
+    public CcuState getArmingState(App app, CcuItem ccu,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiArmingState.replace("CCU_ID", ccu.getId());
+        String url = apiArmingState.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -215,9 +220,9 @@ public class ApiRequestService {
         return null;
     }
 
-    public OptResp opt(App app, CcuItem ccu, Device dev) {
+    public OptResp opt(App app, CcuItem ccu, Device dev,String baseurl) {
         Map<String, String> header = header(app);
-        String url = apiOpt.replace("CCU_ID", ccu.getId()).replace("DEV_ID", dev.getId() + "");
+        String url = apiOpt.replace("CCU_ID", ccu.getId()).replace("DEV_ID", dev.getId() + "").replace("baseurl",baseurl);
         SwitchAction switchAction = new SwitchAction(new Random().nextBoolean());
         Map<Integer,String> response = HttpUtil.post(HttpUtil.getUnsafeOkHttpClient(), url, switchAction, header);
         int statusCode=0;
@@ -243,9 +248,9 @@ public class ApiRequestService {
         return null;
     }
 
-    public CcuInfo getCcuInfo(App app,CcuItem ccu){
+    public CcuInfo getCcuInfo(App app,CcuItem ccu,String baseurl){
         Map<String,String> header=header(app);
-        String url=apiCcuInfo.replace("CCU_ID", ccu.getId());
+        String url=apiCcuInfo.replace("CCU_ID", ccu.getId().replace("baseurl",baseurl));
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -262,6 +267,60 @@ public class ApiRequestService {
                 }else {
                     log.info("call {} with header {} success", url, header);
                     return ccuInfo;
+                }
+            }catch (Exception e){
+                log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
+            }
+        }
+        return null;
+    }
+
+    public List<SceneInfo> getApiScenes(App app,CcuItem ccu,String baseurl){
+        Map<String,String> header=header(app);
+        String url=apiScenes.replace("CCU_ID",ccu.getId()).replace("baseurl",baseurl);
+        Map<Integer,String> response=HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(),url,header);
+        int statusCode=0;
+        for (Integer code:response.keySet()){
+            statusCode=code;
+        }
+        if (statusCode!=200){
+            log.error("call {} with header {} error, code={}, resp={}", url, header, statusCode,response.get(statusCode));
+        }else{
+            String resp=response.get(statusCode);
+            try{
+                List<SceneInfo> scenes=JsonUtil.fromJson(resp,new TypeToken<List<SceneInfo>>(){}.getType());
+                if (scenes == null) {
+                    log.error("call {} with header {} error, resp={}", url, header, resp);
+                } else {
+                    log.info("call {} with header {} success, total {} devices", url, header, scenes.size());
+                    return scenes;
+                }
+            }catch (Exception e){
+                log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
+            }
+        }
+        return null;
+    }
+
+    public List<GroupInfo> getApiGroups(App app,CcuItem ccu,String baseurl){
+        Map<String,String> header=header(app);
+        String url=apiGroups.replace("CCU_ID",ccu.getId()).replace("baseurl",baseurl);
+        Map<Integer,String> response=HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(),url,header);
+        int statusCode=0;
+        for (Integer code:response.keySet()){
+            statusCode=code;
+        }
+        if (statusCode!=200){
+            log.error("call {} with header {} error, code={}, resp={}", url, header, statusCode,response.get(statusCode));
+        }else{
+            String resp=response.get(statusCode);
+            try{
+                List<GroupInfo> scenes=JsonUtil.fromJson(resp,new TypeToken<List<GroupInfo>>(){}.getType());
+                if (scenes == null) {
+                    log.error("call {} with header {} error, resp={}", url, header, resp);
+                } else {
+                    log.info("call {} with header {} success, total {} devices", url, header, scenes.size());
+                    return scenes;
                 }
             }catch (Exception e){
                 log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
