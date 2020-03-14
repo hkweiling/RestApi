@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -250,7 +252,7 @@ public class ApiRequestService {
 
     public CcuInfo getCcuInfo(App app,CcuItem ccu,String baseurl){
         Map<String,String> header=header(app);
-        String url=apiCcuInfo.replace("CCU_ID", ccu.getId().replace("baseurl",baseurl));
+        String url=apiCcuInfo.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -315,18 +317,27 @@ public class ApiRequestService {
         }else{
             String resp=response.get(statusCode);
             try{
-                List<GroupInfo> scenes=JsonUtil.fromJson(resp,new TypeToken<List<GroupInfo>>(){}.getType());
-                if (scenes == null) {
+                List<GroupInfo> groups=JsonUtil.fromJson(resp,new TypeToken<List<GroupInfo>>(){}.getType());
+                if (groups == null) {
                     log.error("call {} with header {} error, resp={}", url, header, resp);
                 } else {
-                    log.info("call {} with header {} success, total {} devices", url, header, scenes.size());
-                    return scenes;
+                    log.info("call {} with header {} success, total {} devices", url, header, groups.size());
+                    return groups;
                 }
             }catch (Exception e){
                 log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
             }
         }
         return null;
+    }
+
+    public <T> List<T> getDuplicateElements(Stream<T> stream) {
+        return stream
+                .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)) // 获得元素出现频率的 Map，键为元素，值为元素出现的次数
+                .entrySet().stream() // Set<Entry>转换为Stream<Entry>
+                .filter(entry -> entry.getValue() > 1) // 过滤出元素出现次数大于 1 的 entry
+                .map(entry -> entry.getKey()) // 获得 entry 的键（重复元素）对应的 Stream
+                .collect(Collectors.toList()); // 转化为 List
     }
 
 }
