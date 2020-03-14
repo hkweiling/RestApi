@@ -252,7 +252,7 @@ public class ApiRequestService {
 
     public CcuInfo getCcuInfo(App app,CcuItem ccu,String baseurl){
         Map<String,String> header=header(app);
-        String url=apiCcuInfo.replace("CCU_ID", ccu.getId()).replace("baseurl",baseurl);
+        String url=apiCcuInfo.replace("CCU_ID", ccu.getId().replace("baseurl",baseurl));
         Map<Integer,String> response = HttpUtil.get(HttpUtil.getUnsafeOkHttpClient(), url, header);
         int statusCode=0;
         for (Integer code:response.keySet()){
@@ -317,12 +317,12 @@ public class ApiRequestService {
         }else{
             String resp=response.get(statusCode);
             try{
-                List<GroupInfo> groups=JsonUtil.fromJson(resp,new TypeToken<List<GroupInfo>>(){}.getType());
-                if (groups == null) {
+                List<GroupInfo> scenes=JsonUtil.fromJson(resp,new TypeToken<List<GroupInfo>>(){}.getType());
+                if (scenes == null) {
                     log.error("call {} with header {} error, resp={}", url, header, resp);
                 } else {
-                    log.info("call {} with header {} success, total {} devices", url, header, groups.size());
-                    return groups;
+                    log.info("call {} with header {} success, total {} devices", url, header, scenes.size());
+                    return scenes;
                 }
             }catch (Exception e){
                 log.error("call {} with header {} error, resp={}, e=", url, header, resp, e);
@@ -331,7 +331,7 @@ public class ApiRequestService {
         return null;
     }
 
-    public <T> List<T> getDuplicateElements(Stream<T> stream) {
+    public  <T> List<T> getDuplicateElements(Stream<T> stream) {
         return stream
                 .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)) // 获得元素出现频率的 Map，键为元素，值为元素出现的次数
                 .entrySet().stream() // Set<Entry>转换为Stream<Entry>
